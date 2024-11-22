@@ -52,7 +52,7 @@ const Gameboard = (function(){
             for (let condition of winConditions) {
                 const [a, b, c] = condition;
                 if (this.board[a] && this.board[a] === this.board[b] && this.board[a] === this.board[c]) {
-                    return this.board[a]; // Return the marker ('X' or 'O') of the winner
+                    return this.board[a];
                 }
             }
 
@@ -62,30 +62,61 @@ const Gameboard = (function(){
             return null;
         };
     }
-
     return new Gameboard();
 })();
 
-const player1 = new Player("Ben", "X");
-const player2 = new Player("Sen", "O");
+const startButton = document.querySelector(".start-button");
+const currentTurn = document.querySelector(".player-turn");
+const boardTiles = document.querySelectorAll(".board-tile");
+const player1 = new Player("Player1", "X");
+const player2 = new Player("Player2", "O");
+
+let gameStart = false;
 let turnorder = [player1, player2];
 let turnIndex = 0;
 
-while (Gameboard.checkWinner() === null) {
-    let currentPlayer = turnorder[turnIndex];
-    let input = prompt(`It's ${currentPlayer.name}'s turn, where to put the marker? (Enter a number between 1-9)`);
-    let position = parseInt(input) - 1;  // Subtract 1 to match the 0-based index
-
-    if (!isNaN(position) && position >= 0 && position <= 8 && Gameboard.board[position] === "") {
-        Gameboard.addMarker(currentPlayer.marker, position);
-        console.log(Gameboard.showBoard());
-
-        // Switch to the next player
-        turnIndex = (turnIndex + 1) % 2;
-    } else {
-        console.log("Invalid input. Try again.");
-    }
+function updateTurnDisplay() {
+    const currentPlayer = turnorder[turnIndex];
+    currentTurn.textContent = `It's ${currentPlayer.name}'s turn!`;
 }
 
+boardTiles.forEach((tile, index) => {
+    tile.addEventListener("click", () => {
 
+        if (gameStart){
+            const currentPlayer = turnorder[turnIndex];
+            if (Gameboard.board[index] === "") {
+                Gameboard.addMarker(currentPlayer.marker, index);
+                tile.textContent = currentPlayer.marker;
+                startButton.textContent = "Reset"
+
+                const winner = Gameboard.checkWinner();
+                if (winner) {
+
+                    if (!Gameboard.board.includes("")) {
+                        currentTurn.textContent = "It's a tie!";
+                        return;
+                    }
+
+                    currentTurn.textContent = `${currentPlayer.name} wins!`;
+                    gameStart = false;
+                    return;
+                }
+
+                turnIndex = (turnIndex + 1) % 2;
+                updateTurnDisplay();
+            } else {
+                console.log("Tile already occupied! Choose another.");
+            }
+    }
+    });
+});
+
+startButton.addEventListener("click", () => {
+    gameStart = true;
+    Gameboard.cleanBoard();
+    boardTiles.forEach((tile) => (tile.textContent = ""));
+    turnIndex = 0;
+    updateTurnDisplay();
+});
 
